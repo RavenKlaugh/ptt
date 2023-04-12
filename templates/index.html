@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chatbot</title>
+</head>
+<body>
+    <h1>Chatbot</h1>
+    <button id="recordButton" type="button">Hold to Record</button><br><br>
+
+    <textarea id="textInput" type="text" rows="10" cols="50" placeholder="Type your message..."></textarea>
+    <button id="textButton" type="button">Submit Text</button><br><br>
+    <audio id="responseAudio" controls></audio><br><br>
+    <label for="chatHistory">Chat History:</label><br>
+    <textarea id="chatHistory" rows="10" cols="50" readonly></textarea>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        const recordButton = document.getElementById('recordButton');
+        const textInput = document.getElementById('textInput');
+        const textButton = document.getElementById('textButton');
+        const responseAudio = document.getElementById('responseAudio');
+
+        let audioRecorder;
+        let recordedChunks = [];
+
+        async function init() {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            audioRecorder = new MediaRecorder(stream);
+            audioRecorder.addEventListener('dataavailable', (event) => {
+                recordedChunks.push(event.data);
+            });
+        }
+
+        function updateChatHistory(userText, botText) {
+            const chatHistory = document.getElementById('chatHistory');
+            chatHistory.value += 'User: ' + userText + '\n';
+            chatHistory.value += 'Bot: ' + botText + '\n';
+        }
+
+        function submitAudio() {
+            const blob = new Blob(recordedChunks, { type: 'audio/wav' });
+            recordedChunks = [];
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const base64data = reader.result.split(',')[1];
+                fetch('/submit_audio', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `audio_data=${encodeURIComponent(base64data)}`,
+                })
+                .then((response) => response.json())
+                .then((data) => {
+                    responseAudio.src = `data:audio/mp3;base64,${data.audio}`;
+                    responseAudio.playbackRate = 1.5;
+                    responseAudio.play();
+                    updateChatHistory('Voice message', data.text); // Replace 'Voice message' with transcribed text if available
+                });
+            };
+            reader.readAsDataURL(blob);
+        }
+
+        function submitText() {
+            const text = textInput.value;
+            fetch('/submit_text', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `text=${encodeURIComponent(text)}`,
+            })
+            .then((response) => response.json())
+            .then((data) => {
+                responseAudio.src = `data:audio/mp3;base64,${data.audio}`;
+                responseAudio.playbackRate = 1.5;
+                responseAudio.play();
+                updateChatHistory(text, data.text);
+            });
+        }
+
+
+        recordButton.addEventListener('mousedown', () => {
+            audioRecorder.start();
+        });
+
+        recordButton.addEventListener('mouseup', () => {
+            audioRecorder.stop();
+            setTimeout(submitAudio, 100);
+        });
+
+        function onResponseAudio(url) {
+            let responseAudio = document.getElementById('responseAudio');
+            responseAudio.src = url;
+            responseAudio.playbackRate = 1.5;
+            responseAudio.play();
+        }
+
+        function getAudioURL(text, callback) {
+            fetch('/get_audio_url', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `text=${encodeURIComponent(text)}`,
+            })
+            .then((response) => response.text())
+            .then((url) => {
+                callback(url);
+            });
+        }
+
+        function onResponse(text) {
+            let chatHistory = document.getElementById('chatHistory');
+            chatHistory.value += 'Bot: ' + text + '\n';
+            getAudioURL(text, onResponseAudio);
+        }
+
+        textButton.addEventListener('click', submitText);
+        
+        init();
+
+    </script>
+</body>
+</html>

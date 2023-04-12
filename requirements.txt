@@ -1,0 +1,7 @@
+Flask
+flask-cors
+openai
+whisper
+boto3
+pydub
+SpeechRecognition
