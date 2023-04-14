@@ -5,7 +5,7 @@ This project provides a web interface to interact with OpenAI's ChatGPT using te
 
 ## Prerequisites
 
-- Docker
+- Docker Desktop
 - OpenAI API Key
 - AWS Access Key and AWS Secret Access Key (see https://docs.aws.amazon.com/polly/latest/dg/getting-started.html) 
 
