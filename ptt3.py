@@ -51,14 +51,18 @@ def submit_audio():
     result = model.transcribe("audio.wav")
     user_input = result["text"]
     print(f"You said: {user_input}")
-
+    if len(user_input) < 10:
+        return jsonify({'text': 'voice prompt too short, no prompt submitted'})
     messages.append({"role": "user", "content": user_input})
 
+    model_name = request.form['model']
+    max_tokens = int(request.form['max_tokens'])
+
     response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
+        model=model_name,
         messages=messages,
         temperature=0.5,
-        max_tokens=150,
+        max_tokens=max_tokens,
         top_p=1,
         frequency_penalty=0,
         presence_penalty=0,
@@ -78,7 +82,7 @@ def submit_audio():
 
     base64_audio = base64.b64encode(audio_data).decode('utf-8')
 
-    return jsonify({'audio': base64_audio, 'text': bot_response})
+    return jsonify({'audio': base64_audio, 'user_input': user_input, 'response_text': bot_response})
 
 @app.route('/submit_text', methods=['POST'])
 def submit_text():
@@ -89,11 +93,14 @@ def submit_text():
 
     messages.append({"role": "user", "content": user_input})
 
+    model_name = request.form['model']
+    max_tokens = int(request.form['max_tokens'])
+
     response = openai.ChatCompletion.create(
-        model="gpt-3.5-turbo",
+        model=model_name,
         messages=messages,
         temperature=0.5,
-        max_tokens=150,
+        max_tokens=max_tokens,
         top_p=1,
         frequency_penalty=0,
         presence_penalty=0,
@@ -113,7 +120,7 @@ def submit_text():
 
     base64_audio = base64.b64encode(audio_data).decode('utf-8')
 
-    return jsonify({'audio': base64_audio, 'text': bot_response})
+    return jsonify({'audio': base64_audio, 'response_text': bot_response})
 
 @app.route('/')
 def index():

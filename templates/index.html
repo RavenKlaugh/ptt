@@ -3,17 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chatbot</title>
+    <title>ChatClient</title>
 </head>
 <body>
-    <h1>Chatbot</h1>
-    <button id="recordButton" type="button">Hold to Record</button><br><br>
 
-    <textarea id="textInput" type="text" rows="10" cols="50" placeholder="Type your message..."></textarea>
-    <button id="textButton" type="button">Submit Text</button><br><br>
+    <label for="modelSelector">Choose a GPT model:</label>
+    <select id="modelSelector">
+        <option value="gpt-3.5-turbo">GPT-3.5 Turbo</option>
+        <option value="gpt-4">GPT-4</option>
+    </select><br><br>
+
+    <label for="maxTokensSelector">Max tokens:</label>
+    <select id="maxTokensSelector">
+        <option value="500">500</option>
+        <option value="1000">1000</option>
+        <option value="2000">2000</option>
+        <option value="3000">3000</option>
+        <option value="4000">4000</option>
+    </select><br><br>
+
+    <button class="recordButton" id="recordButton" type="button">Hold to Record</button>
+
+    <button class="textButton" id="textButton" type="button">Submit Text</button>
+
+    <button class="clearButton" id="clearButton" type="button">Clear Text</button><br><br>
+
+    <textarea id="textInput" type="text" rows="10" cols="50" placeholder="Type your message..." style="width: 1500px; height: 300px;"></textarea>
+    <br><br>
     <audio id="responseAudio" controls></audio><br><br>
     <label for="chatHistory">Chat History:</label><br>
-    <textarea id="chatHistory" rows="10" cols="50" readonly></textarea>
+    <textarea id="chatHistory" rows="10" cols="50" readonly="" style="width: 1500px; height: 700px;"></textarea>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script>
         const recordButton = document.getElementById('recordButton');
@@ -40,6 +59,8 @@
 
         function submitAudio() {
             const blob = new Blob(recordedChunks, { type: 'audio/wav' });
+            const model = document.getElementById('modelSelector').value;
+            const maxTokens = document.getElementById('maxTokensSelector').value;
             recordedChunks = [];
             const reader = new FileReader();
             reader.onloadend = () => {
@@ -47,35 +68,42 @@
                 fetch('/submit_audio', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: `audio_data=${encodeURIComponent(base64data)}`,
+                    body: `audio_data=${encodeURIComponent(base64data)}&model=${encodeURIComponent(model)}&max_tokens=${encodeURIComponent(maxTokens)}`,
                 })
                 .then((response) => response.json())
                 .then((data) => {
                     responseAudio.src = `data:audio/mp3;base64,${data.audio}`;
                     responseAudio.playbackRate = 1.5;
                     responseAudio.play();
-                    updateChatHistory('Voice message', data.text); // Replace 'Voice message' with transcribed text if available
+                    updateChatHistory(data.user_input, data.response_text);
                 });
             };
             reader.readAsDataURL(blob);
         }
 
+
         function submitText() {
             const text = textInput.value;
+            const model = document.getElementById('modelSelector').value;
+            const maxTokens = document.getElementById('maxTokensSelector').value;
             fetch('/submit_text', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `text=${encodeURIComponent(text)}`,
+                body: `text=${encodeURIComponent(text)}&model=${encodeURIComponent(model)}&max_tokens=${encodeURIComponent(maxTokens)}`,
             })
             .then((response) => response.json())
             .then((data) => {
                 responseAudio.src = `data:audio/mp3;base64,${data.audio}`;
                 responseAudio.playbackRate = 1.5;
                 responseAudio.play();
-                updateChatHistory(text, data.text);
+                updateChatHistory(text, data.response_text);
             });
         }
 
+        const clearButton = document.getElementById('clearButton');
+        clearButton.addEventListener('click', () => {
+            textInput.value = '';
+        });
 
         recordButton.addEventListener('mousedown', () => {
             audioRecorder.start();
@@ -115,6 +143,44 @@
         
         init();
 
+
     </script>
+    <style>
+        .recordButton, .textButton, .clearButton {
+            width: 166px;
+            height: 70px;
+            border: none;
+            padding: 30px;
+            font-size: 15px;
+        }
+
+        .recordButton {
+            background-color: blue;
+            color: white;
+        }
+
+        .recordButton:active {
+            background-color: red;
+        }
+
+        .textButton {
+            background-color: green;
+            color: white;
+        }
+
+        .textButton:active {
+            background-color: red;
+        }
+
+        .clearButton {
+            background-color: orange;
+            color: white;
+        }
+
+        .clearButton:active {
+            background-color: red;
+        }
+    </style>
 </body>
 </html>
+
