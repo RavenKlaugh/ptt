@@ -13,16 +13,23 @@ This project provides a web interface to interact with OpenAI's ChatGPT using te
 
 1. Clone the repository:
 
-`git clone https://github.com/your_github_username/chatgpt-web-interface.git`
+```
+git clone https://github.com/your_github_username/chatgpt-web-interface.git
+```
 
 2. Build the Docker image:
-  `cd ptt`
-  `docker build -t ptt .`
+
+```
+cd ptt
+docker build -t ptt .
+```
 
 3. Run the Docker container, passing the OpenAI API key, AWS Access key, and AWS Secret Access key as environment variables:
 
-  `docker run -p 5000:5000 -e OPENAI_API_KEY=youropenaiapikey -e AWS_ACCESS_KEY_ID=youracceskey -e AWS_SECRET_ACCESS_KEY=yoursecretacceskey ptt`
-  
+```
+docker run -p 5000:5000 -e OPENAI_API_KEY=youropenaiapikey -e AWS_ACCESS_KEY_ID=youracceskey -e AWS_SECRET_ACCESS_KEY=yoursecretacceskey ptt
+```
+
   Replace `your_openai_api_key` with your actual OpenAI API key.
 
 4. Access the web interface:
