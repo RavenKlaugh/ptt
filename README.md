@@ -1,4 +1,4 @@
-# ptt
+# PTT (Push To Talk)
 Push To Talk for ChatGPT
 
 This project provides a web interface to interact with OpenAI's ChatGPT using text or voice input. The interface is designed using Flask and is deployed using Docker. With this project, you can have a seamless experience with ChatGPT, receiving text and audio responses to your queries.
